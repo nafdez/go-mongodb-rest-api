@@ -1,0 +1,25 @@
+version: "3.9"
+services:
+  app:
+    container_name: portfolio-api
+    restart: unless-stopped
+    build: .
+    depends_on:
+      mongodb-api-portfolio:
+        condition: service_healthy
+    ports:
+      - "9999:9999"
+  mongodb-api-portfolio:
+    container_name: mongodb-api-portfolio
+    image: mongo:7.0.5-jammy
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: portfolio-angular
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh 127.0.0.1:27017 --quiet
+      timeout: 5s
+      retries: 10
+    volumes:
+      - /home/nachosrv/appdata/portfolio-angular/mongodb:/data/db
