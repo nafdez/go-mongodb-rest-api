@@ -64,7 +64,11 @@ func (s UserServiceImpl) authenticateWithToken(ctx context.Context, username str
 
 	// Update the user token
 	user.Token = generateRandomToken()
-	s.UpdateUser(ctx, token, &user)
+
+	user, err = s.UpdateUser(ctx, token, &user)
+	if err != nil {
+		return model.User{}, err
+	}
 
 	return user, nil
 }
