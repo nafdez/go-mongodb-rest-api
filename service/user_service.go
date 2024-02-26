@@ -20,7 +20,7 @@ var (
 
 type UserService interface {
 	Authenticate(ctx context.Context, loginReq request.Login) (model.User, error)
-	assignNewToken(ctx context.Context, oldToken string, user *model.User) (model.User, error)
+	assignNewToken(ctx context.Context, oldToken string, user model.User) (model.User, error)
 	GetUser(ctx context.Context, username string) (model.User, error)
 	CreateUser(ctx context.Context, user *model.User) (model.User, error)
 	UpdateUser(ctx context.Context, token string, user *model.User) (model.User, error)
@@ -82,6 +82,7 @@ func (s UserServiceImpl) authenticateWithPassword(ctx context.Context, username 
 	return s.assignNewToken(ctx, user.Token, user)
 }
 
+// Creates a new token for the user and updates it, then return the updated user
 func (s UserServiceImpl) assignNewToken(ctx context.Context, oldToken string, user model.User) (model.User, error) {
 	// Update the user token
 	user.Token = generateRandomToken()
