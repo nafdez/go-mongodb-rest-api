@@ -22,14 +22,19 @@ func Init(init *config.Initialization) *gin.Engine {
 	router.Use(cors.New(config))
 
 	router.GET("/ping", init.UserCtrl.Ping)
-	router.GET("/users/:username", init.UserCtrl.GetUser)
-	router.POST("/users", init.UserCtrl.CreateUser)
-	router.PUT("/users/:username", init.UserCtrl.UpdateUser)
-	router.DELETE("/users/:username", init.UserCtrl.DeleteUser)
 
-	router.Group("/auth")
+	// Defining groups and int's mappings
+	var userGroup *gin.RouterGroup = router.Group("/users")
 	{
-		router.POST("/login", init.UserCtrl.Authenticate)
+		userGroup.GET("/:username", init.UserCtrl.GetUser)
+		userGroup.POST("", init.UserCtrl.CreateUser)
+		userGroup.PUT("/:username", init.UserCtrl.UpdateUser)
+		userGroup.DELETE("/:username", init.UserCtrl.DeleteUser)
+	}
+
+	var authGroup *gin.RouterGroup = router.Group("/auth")
+	{
+		authGroup.POST("/login", init.UserCtrl.Authenticate)
 		// TODO: Sign-up
 	}
 
