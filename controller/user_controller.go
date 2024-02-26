@@ -53,7 +53,7 @@ func (s UserControllerImpl) GetUser(ctx *gin.Context) {
 		}
 		ctx.JSON(http.StatusInternalServerError, err.Error())
 	}
-	ctx.JSON(http.StatusOK, gin.H{"user": user})
+	ctx.JSON(http.StatusOK, user)
 }
 
 // CreateUser creates a new user. It needs the following fields to
@@ -76,7 +76,7 @@ func (s UserControllerImpl) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"user": user})
+	ctx.JSON(http.StatusOK, user)
 }
 
 // UpdateUser takes a token and updates the user who owns the token
@@ -115,7 +115,7 @@ func (s UserControllerImpl) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"user": user})
+	ctx.JSON(http.StatusOK, user)
 }
 
 // DeleteUser deletes the user who the token belongs to
