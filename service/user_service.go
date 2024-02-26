@@ -20,6 +20,7 @@ var (
 
 type UserService interface {
 	Authenticate(ctx context.Context, loginReq request.Login) (model.User, error)
+	assignNewToken(ctx context.Context, oldToken string, user *model.User) (model.User, error)
 	GetUser(ctx context.Context, username string) (model.User, error)
 	CreateUser(ctx context.Context, user *model.User) (model.User, error)
 	UpdateUser(ctx context.Context, token string, user *model.User) (model.User, error)
@@ -62,15 +63,8 @@ func (s UserServiceImpl) authenticateWithToken(ctx context.Context, username str
 		return model.User{}, err
 	}
 
-	// Update the user token
-	user.Token = generateRandomToken()
-
-	user, err = s.UpdateUser(ctx, token, &user)
-	if err != nil {
-		return model.User{}, err
-	}
-
-	return user, nil
+	// Returning the user with the new token assigned
+	return s.assignNewToken(ctx, token, user)
 }
 
 // authenticateWithToken authenticates the user with the provided username and password
@@ -84,11 +78,22 @@ func (s UserServiceImpl) authenticateWithPassword(ctx context.Context, username 
 		return model.User{}, ErrInvalidUsernameOrPassword
 	}
 
+	// Returning the user with the new token assigned
+	return s.assignNewToken(ctx, user.Token, user)
+}
+
+func (s UserServiceImpl) assignNewToken(ctx context.Context, oldToken string, user model.User) (model.User, error) {
 	// Update the user token
 	user.Token = generateRandomToken()
-	s.UpdateUser(ctx, user.Token, &user)
 
-	// Needs to be sanitized for not sending the password
+	// Updates the user in database
+	var err error
+	user, err = s.UpdateUser(ctx, oldToken, &user)
+	if err != nil {
+		return model.User{}, err
+	}
+
+	// Return sanitized version of password since not needed
 	return sanitizeUser(user), nil
 }
 
