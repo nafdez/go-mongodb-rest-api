@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"ignaciofp.es/web-service-portfolio/model"
+	"ignaciofp.es/web-service-portfolio/model/request"
 	"ignaciofp.es/web-service-portfolio/repository"
 	"ignaciofp.es/web-service-portfolio/service"
 )
@@ -36,12 +37,38 @@ func (s UserControllerImpl) Ping(ctx *gin.Context) {
 // the username provided and returns the user if both match
 // Also accepts receiving a token for login
 func (s UserControllerImpl) Authenticate(ctx *gin.Context) {
+	// Binding json body to loginReq to retrieve username and/or password
+	var loginReq request.Login
+	err := ctx.ShouldBindJSON(&loginReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	// If token is provided and password is not empty
+	// then login with that token
+	// I check the password isn't empty so client can just
+	// throw whatever it has instead of doing more checks on
+	// frontend.
+	token := ctx.GetHeader("Token")
+	if token != "" && loginReq.Password != "" {
+		loginReq.Token = token
+	}
+
+	user, err := s.service.Authenticate(ctx, loginReq)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	ctx.IndentedJSON(http.StatusOK, user)
+
 }
 
 // GetUser gets a username and returns the user associated with the username
-// TODO: GetUser gets a token from the client and returns the user who has the given token
 func (s UserControllerImpl) GetUser(ctx *gin.Context) {
 	username := ctx.Param("username")
+	// TODO: Only return if token matched
+	// _ := ctx.GetHeader("Token")
 	if username == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid argument username"})
 	}

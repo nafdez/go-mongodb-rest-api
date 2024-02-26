@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 	"ignaciofp.es/web-service-portfolio/model"
+	"ignaciofp.es/web-service-portfolio/model/request"
 	"ignaciofp.es/web-service-portfolio/repository"
 )
 
@@ -18,7 +19,7 @@ var (
 )
 
 type UserService interface {
-	Authenticate(ctx context.Context, params map[string]string) (model.User, error)
+	Authenticate(ctx context.Context, loginReq request.Login) (model.User, error)
 	GetUser(ctx context.Context, username string) (model.User, error)
 	CreateUser(ctx context.Context, user *model.User) (model.User, error)
 	UpdateUser(ctx context.Context, token string, user *model.User) (model.User, error)
@@ -36,10 +37,10 @@ func UserServiceInit(repository repository.UserRepository) *UserServiceImpl {
 // Authenticate checks if username and password are valid and correct and returns the user with a newly
 // generated token. If a token with a username is provided, and they are valid also returns the user
 // params: username, password, token
-func (s UserServiceImpl) Authenticate(ctx context.Context, params map[string]string) (model.User, error) {
-	username := params["username"]
-	password := params["password"]
-	token := params["token"]
+func (s UserServiceImpl) Authenticate(ctx context.Context, loginReq request.Login) (model.User, error) {
+	username := loginReq.Username
+	password := loginReq.Password
+	token := loginReq.Token
 
 	if token != "" && username != "" {
 		// Login with token and username

@@ -27,5 +27,11 @@ func Init(init *config.Initialization) *gin.Engine {
 	router.PUT("/users/:username", init.UserCtrl.UpdateUser)
 	router.DELETE("/users/:username", init.UserCtrl.DeleteUser)
 
+	router.Group("/auth")
+	{
+		router.POST("/login", init.UserCtrl.Authenticate)
+		// TODO: Sign-up
+	}
+
 	return router
 }

@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"ignaciofp.es/web-service-portfolio/config"
 	"ignaciofp.es/web-service-portfolio/router"
@@ -15,15 +16,16 @@ func init() {
 		log.Fatalf("Error loading .env file: %s", err)
 	}
 
-	// gin.SetMode(gin.ReleaseMode)
+	mode := os.Getenv("MODE")
+	gin.SetMode(mode)
 }
 
 func main() {
 	// Initializing dependency injection
-	init := config.Init()
+	var init *config.Initialization = config.Init()
 
 	// Init gin and it's mappings
-	app := router.Init(init)
+	var app *gin.Engine = router.Init(init)
 
 	port := os.Getenv("PORT")
 	app.Run(":" + port)
