@@ -13,7 +13,7 @@ import (
 // ConnectToDB connects to the database using the provided uri and database name in the .env file and returns the database
 func ConnectToDB() *mongo.Database {
 	ctx := context.TODO()
-	uri := os.Getenv("MONGO_URI_DEV")
+	uri := os.Getenv("MONGO_URI")
 	dbName := os.Getenv("MONGO_DATABASE")
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
