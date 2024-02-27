@@ -20,9 +20,9 @@
 # Go workspace file
 go.work
 
-.env
+./.env
 
-docker-compose.yml
-Dockerfile
-.dockerignore
-mongo-init.js
+./docker-compose.yml
+./Dockerfile
+./.dockerignore
+./mongo-init.js
