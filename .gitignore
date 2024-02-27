@@ -25,3 +25,4 @@ go.work
 docker-compose.yml
 Dockerfile
 .dockerignore
+mongo-init.js
