@@ -6,7 +6,6 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"ignaciofp.es/web-service-portfolio/model"
 	"ignaciofp.es/web-service-portfolio/model/request"
 	"ignaciofp.es/web-service-portfolio/util"
@@ -14,7 +13,6 @@ import (
 
 type UserRepository interface {
 	GetUser(ctx context.Context, filter bson.D) (model.User, error)
-	GetUserWithProjection(ctx context.Context, filter bson.D, projection bson.D) (model.User, error)
 	CreateUser(ctx context.Context, user model.User) error
 	UpdateUser(ctx context.Context, token string, updateReq request.Update) error
 	DeleteUser(ctx context.Context, token string) error
@@ -53,18 +51,6 @@ func (r UserRepositoryImpl) GetUser(ctx context.Context, filter bson.D) (model.U
 	return result, nil
 }
 
-// GetUser finds a user in the database using the specified filter and returns it
-func (r UserRepositoryImpl) GetUserWithProjection(ctx context.Context, filter bson.D, projection bson.D) (model.User, error) {
-	var result model.User
-	if err := r.userCollection.FindOne(ctx, filter, options.FindOne().SetProjection(projection)).Decode(&result); err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return model.User{}, util.ErrUserNotFound
-		}
-		return model.User{}, err
-	}
-	return result, nil
-}
-
 // CreateUser creates a new user in the database
 func (r UserRepositoryImpl) CreateUser(ctx context.Context, user model.User) error {
 	_, err := r.userCollection.InsertOne(ctx, user)
@@ -77,10 +63,25 @@ func (r UserRepositoryImpl) CreateUser(ctx context.Context, user model.User) err
 	return nil
 }
 
-// UpdateUser updates a user in the database and returns it. Only accepts updates to points and token
+// UpdateUser updates a user in the database and returns it. Only accepts updates to points or token
 func (r UserRepositoryImpl) UpdateUser(ctx context.Context, token string, updateReq request.Update) error {
 
-	result, err := r.userCollection.UpdateOne(ctx, bson.M{"token": token}, bson.M{"$set": updateReq})
+	// Ugly temporary hack
+	// When using struct directly it updates
+	// both the token and the points
+	// Doing this workaround avoids that
+	// but not the best.
+	// Error: when specifically setting points to 0
+	// doesn't update them
+	in := bson.M{}
+	if updateReq.Points != 0 {
+		in["points"] = updateReq.Points
+	}
+	if updateReq.Token != "" {
+		in["token"] = updateReq.Token
+	}
+
+	result, err := r.userCollection.UpdateOne(ctx, bson.M{"token": token}, bson.M{"$set": in})
 	if err != nil {
 		return err
 	}

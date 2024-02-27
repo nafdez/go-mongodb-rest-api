@@ -14,7 +14,6 @@ type UserService interface {
 	GetUserByToken(ctx context.Context, token string) (model.User, error)
 	GetUserWithPass(ctx context.Context, token string) (model.User, error)
 	GetUserByFilter(ctx context.Context, filter bson.D) (model.User, error)
-	GetUserByFilterAndProjection(ctx context.Context, filter bson.D, projection bson.D) (model.User, error)
 	CreateUser(ctx context.Context, user model.User) error
 	UpdateUser(ctx context.Context, token string, updateReq request.Update) error
 	DeleteUser(ctx context.Context, token string) error
@@ -40,10 +39,6 @@ func (s UserServiceImpl) GetUserWithPass(ctx context.Context, token string) (mod
 }
 
 func (s UserServiceImpl) GetUserByFilter(ctx context.Context, filter bson.D) (model.User, error) {
-	return s.repository.GetUser(ctx, filter)
-}
-
-func (s UserServiceImpl) GetUserByFilterAndProjection(ctx context.Context, filter bson.D, projection bson.D) (model.User, error) {
 	return s.repository.GetUser(ctx, filter)
 }
 

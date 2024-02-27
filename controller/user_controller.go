@@ -65,11 +65,7 @@ func (s UserControllerImpl) UpdateUser(ctx *gin.Context) {
 	err := s.service.UpdateUser(ctx, token, updateReq)
 	if err != nil {
 		if errors.Is(err, util.ErrUserNotFound) {
-			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
-		}
-		if errors.Is(err, util.ErrNoValidTokenProvided) {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			ctx.JSON(http.StatusNotFound, gin.H{"error": util.ErrNoValidTokenProvided})
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -82,19 +78,10 @@ func (s UserControllerImpl) UpdateUser(ctx *gin.Context) {
 // DeleteUser deletes the user who the token belongs to
 func (s UserControllerImpl) DeleteUser(ctx *gin.Context) {
 	token := ctx.GetHeader("Token")
-	username := ctx.Param("username")
 
-	if username == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid argument username"})
-		return
-	}
 	if err := s.service.DeleteUser(ctx, token); err != nil {
-		if errors.Is(err, util.ErrUserNotFound) {
-			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
-		}
-		if errors.Is(err, util.ErrNoValidTokenProvided) {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		if errors.Is(err, util.ErrUserNotFound) { // Y si no te gusta te jodes
+			ctx.JSON(http.StatusNotFound, gin.H{"error": util.ErrNoValidTokenProvided.Error()})
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

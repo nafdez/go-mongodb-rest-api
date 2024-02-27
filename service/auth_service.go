@@ -29,14 +29,14 @@ func AuthServiceInit(service UserService) *AuthServiceImpl {
 }
 
 // Authenticate checks if username and password are valid and correct and returns newly
-// generated token. If a token with a username is provided, and they are valid also returns the new token
+// generated token. If a token  is provided and is valid generates, updates and returns a new token
 // params: username, password, token
 func (s AuthServiceImpl) Authenticate(ctx context.Context, authReq request.Auth) (string, error) {
 	username := authReq.Username
 	password := authReq.Password
 	token := authReq.Token
 
-	if token != "" && username != "" {
+	if token != "" {
 		// Login with token and username
 		return s.authenticateWithToken(ctx, token)
 	}
@@ -89,8 +89,12 @@ func (s AuthServiceImpl) Register(ctx context.Context, registerReq request.Regis
 }
 
 func (s AuthServiceImpl) Logout(ctx context.Context, token string) error {
-	s.service.UpdateUser(ctx, token, request.Update{Token: ""})
-	return nil
+	// Generating another random token and not returning it, so
+	// Previous token isn't valid anymore
+	// If we simply put empty token or for example "invalid_token"
+	// and someone knows that it's so easy for them to do whatever
+	// with that token
+	return s.service.UpdateUser(ctx, token, request.Update{Token: generateRandomToken()})
 }
 
 // authenticateWithToken authenticates the user with the provided token and username. Returns a new token
@@ -113,16 +117,7 @@ func (s AuthServiceImpl) authenticateWithPassword(ctx context.Context, username 
 		},
 	}
 
-	projection := bson.D{
-		{
-			Key: "last_seen", Value: false,
-		},
-		{
-			Key: "since", Value: false,
-		},
-	}
-
-	user, err := s.service.GetUserByFilterAndProjection(ctx, filter, projection)
+	user, err := s.service.GetUserByFilter(ctx, filter)
 	if err != nil {
 		return "", err
 	}

@@ -52,6 +52,10 @@ func (s AuthControllerImpl) Authenticate(ctx *gin.Context) {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}
+		if errors.Is(err, util.ErrNoUsernameOrPasswordProvided) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -70,7 +74,7 @@ func (s AuthControllerImpl) Register(ctx *gin.Context) {
 		return
 	}
 
-	user, err := s.service.Register(ctx, registerReq)
+	token, err := s.service.Register(ctx, registerReq)
 	if err != nil {
 		if errors.Is(err, util.ErrUserAlreadyExists) {
 			ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
@@ -80,7 +84,7 @@ func (s AuthControllerImpl) Register(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, user)
+	ctx.JSON(http.StatusOK, gin.H{"token": token})
 }
 
 func (s AuthControllerImpl) Logout(ctx *gin.Context) {

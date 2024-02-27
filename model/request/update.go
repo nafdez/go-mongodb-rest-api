@@ -1,6 +1,6 @@
 package request
 
 type Update struct {
-	Points string `json:"points"`
+	Points int32  `json:"points"`
 	Token  string `json:"token"`
 }
