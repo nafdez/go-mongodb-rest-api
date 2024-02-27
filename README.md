@@ -40,7 +40,7 @@ services:
     restart: unless-stopped
     build: .
     depends_on:
-      mongodb-api-portfolio:
+      mongodb-api:
         condition: service_healthy
     ports:
       - "8080:8080"
