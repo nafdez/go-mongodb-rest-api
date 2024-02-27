@@ -26,16 +26,16 @@ func Init(init *config.Initialization) *gin.Engine {
 	// Defining groups and int's mappings
 	var userGroup *gin.RouterGroup = router.Group("/users")
 	{
-		userGroup.GET("/:username", init.UserCtrl.GetUser)
-		userGroup.POST("", init.UserCtrl.CreateUser)
-		userGroup.PUT("/:username", init.UserCtrl.UpdateUser)
-		userGroup.DELETE("/:username", init.UserCtrl.DeleteUser)
+		userGroup.GET("/", init.UserCtrl.GetUser)
+		userGroup.PUT("/", init.UserCtrl.UpdateUser)
+		userGroup.DELETE("/", init.UserCtrl.DeleteUser)
 	}
 
 	var authGroup *gin.RouterGroup = router.Group("/auth")
 	{
-		authGroup.POST("/login", init.UserCtrl.Authenticate)
-		// TODO: Sign-up
+		authGroup.POST("/login", init.AuthCtrl.Authenticate)
+		authGroup.POST("/register", init.AuthCtrl.Register)
+		authGroup.POST("/logout", init.AuthCtrl.Logout)
 	}
 
 	return router

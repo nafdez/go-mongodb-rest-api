@@ -5,17 +5,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"ignaciofp.es/web-service-portfolio/model"
 	"ignaciofp.es/web-service-portfolio/model/request"
-	"ignaciofp.es/web-service-portfolio/repository"
 	"ignaciofp.es/web-service-portfolio/service"
+	"ignaciofp.es/web-service-portfolio/util"
 )
 
 type UserController interface {
 	Ping(ctx *gin.Context)
-	Authenticate(ctx *gin.Context)
 	GetUser(ctx *gin.Context)
-	CreateUser(ctx *gin.Context)
 	UpdateUser(ctx *gin.Context)
 	DeleteUser(ctx *gin.Context)
 }
@@ -33,108 +30,45 @@ func (s UserControllerImpl) Ping(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "Hello!")
 }
 
-// Authenticate takes a username and password and checks it against the user that has
-// the username provided and returns the user if both match
-// Also accepts receiving a token for login
-func (s UserControllerImpl) Authenticate(ctx *gin.Context) {
-	// Binding json body to loginReq to retrieve username and/or password
-	var loginReq request.Login
-	err := ctx.ShouldBindJSON(&loginReq)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
-		return
-	}
-
-	// If token is provided and password is not empty
-	// then login with that token
-	// I check the password isn't empty so client can just
-	// throw whatever it has instead of doing more checks on
-	// frontend.
-	token := ctx.GetHeader("Token")
-	if token != "" && loginReq.Password != "" {
-		loginReq.Token = token
-	}
-
-	user, err := s.service.Authenticate(ctx, loginReq)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
-
-	ctx.IndentedJSON(http.StatusOK, user)
-
-}
-
-// GetUser gets a username and returns the user associated with the username
+// GetUser gets a token and returns the user associated with the token
 func (s UserControllerImpl) GetUser(ctx *gin.Context) {
-	username := ctx.Param("username")
-	// TODO: Only return if token matched
-	// _ := ctx.GetHeader("Token")
-	if username == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid argument username"})
-	}
-
-	user, err := s.service.GetUser(ctx, username)
-	if err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
-			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		}
-		ctx.JSON(http.StatusInternalServerError, err.Error())
-	}
-	ctx.JSON(http.StatusOK, user)
-}
-
-// CreateUser creates a new user. It needs the following fields to
-// be set: username, email and password.
-// It returns a user with a token to use on update and delete.
-func (s UserControllerImpl) CreateUser(ctx *gin.Context) {
-	var user model.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+	token := ctx.GetHeader("Token")
+	if token == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "missing token"})
 		return
 	}
 
-	user, err := s.service.CreateUser(ctx, &user)
+	user, err := s.service.GetUserByToken(ctx, token)
 	if err != nil {
-		if errors.Is(err, repository.ErrUserAlreadyExists) {
-			ctx.JSON(http.StatusConflict, err.Error())
+		if errors.Is(err, util.ErrUserNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
-
 	ctx.JSON(http.StatusOK, user)
 }
 
 // UpdateUser takes a token and updates the user who owns the token
 // The only fields that are allowed to update are "points" and "token"
 func (s UserControllerImpl) UpdateUser(ctx *gin.Context) {
-	username := ctx.Param("username")
 	token := ctx.GetHeader("Token")
 
-	// Checking username is not empty
-	if username == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid argument username"})
-		return
-	}
-
-	// Checking if provided body is valid and binding to model.User struct
-	var user model.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
+	// Checking if provided body is valid and binding to update request
+	var updateReq request.Update
+	if err := ctx.ShouldBindJSON(&updateReq); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
-	// Setting username to user object in case isn't provided on body, so the service
-	// can actually find the user to update
-	user.Username = username
-	user, err := s.service.UpdateUser(ctx, token, &user)
+	err := s.service.UpdateUser(ctx, token, updateReq)
 	if err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
+		if errors.Is(err, util.ErrUserNotFound) {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}
-		if errors.Is(err, service.ErrNoValidTokenProvided) {
+		if errors.Is(err, util.ErrNoValidTokenProvided) {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -142,7 +76,7 @@ func (s UserControllerImpl) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, user)
+	ctx.JSON(http.StatusOK, gin.H{})
 }
 
 // DeleteUser deletes the user who the token belongs to
@@ -154,12 +88,12 @@ func (s UserControllerImpl) DeleteUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid argument username"})
 		return
 	}
-	if err := s.service.DeleteUser(ctx, token, username); err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
+	if err := s.service.DeleteUser(ctx, token); err != nil {
+		if errors.Is(err, util.ErrUserNotFound) {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}
-		if errors.Is(err, service.ErrNoValidTokenProvided) {
+		if errors.Is(err, util.ErrNoValidTokenProvided) {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
