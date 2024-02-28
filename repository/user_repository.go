@@ -27,18 +27,6 @@ func UserRepositoryInit(db *mongo.Database) *UserRepositoryImpl {
 	return &UserRepositoryImpl{db: db, userCollection: db.Collection("users")}
 }
 
-// // GetUser finds a user in the database using the specified filter and returns it
-// func (r UserRepositoryImpl) GetUser(ctx context.Context, token string) (model.User, error) {
-// 	var result model.User
-// 	if err := r.userCollection.FindOne(ctx, bson.M{"token": token}).Decode(&result); err != nil {
-// 		if errors.Is(err, mongo.ErrNoDocuments) {
-// 			return model.User{}, util.ErrUserNotFound
-// 		}
-// 		return model.User{}, err
-// 	}
-// 	return result, nil
-// }
-
 // GetUser finds a user in the database using the specified filter and returns it
 func (r UserRepositoryImpl) GetUser(ctx context.Context, filter bson.D) (model.User, error) {
 	var result model.User
@@ -65,7 +53,6 @@ func (r UserRepositoryImpl) CreateUser(ctx context.Context, user model.User) err
 
 // UpdateUser updates a user in the database and returns it. Only accepts updates to points or token
 func (r UserRepositoryImpl) UpdateUser(ctx context.Context, token string, updateReq request.Update) error {
-
 	// Ugly temporary hack
 	// When using struct directly it updates
 	// both the token and the points

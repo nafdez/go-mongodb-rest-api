@@ -64,8 +64,6 @@ func (s UserServiceImpl) CreateUser(ctx context.Context, user model.User) error 
 		return util.ErrNoUsernameOrPasswordProvided
 	}
 
-	// TODO: making sure username is unique
-
 	return s.repository.CreateUser(ctx, user)
 }
 
