@@ -28,21 +28,18 @@ func AuthControllerInit(service service.AuthService) *AuthControllerImpl {
 // with the usernames user password and returns a newly generated token
 // Also accepts receiving a token for login and still returns a new token
 func (s AuthControllerImpl) Authenticate(ctx *gin.Context) {
-	// Binding json body to loginReq to retrieve username and/or password
+	token := ctx.GetHeader("Token")
+
+	// Bind json body to loginReq to retrieve username and/or password
 	var loginReq request.Auth
 	err := ctx.ShouldBindJSON(&loginReq)
-	if err != nil {
+	if err != nil && token == "" { // Check if token is provided to not return invalid request when login with token
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
-	// If token is provided and password is not empty
-	// then login with that token
-	// I check the password isn't empty so client can just
-	// throw whatever it has instead of doing more checks on
-	// frontend.
-	token := ctx.GetHeader("Token")
-	if token != "" && loginReq.Password != "" {
+	// If token is provided then login with that token
+	if token != "" {
 		loginReq.Token = token
 	}
 
