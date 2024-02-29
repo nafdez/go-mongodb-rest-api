@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"ignaciofp.es/web-service-portfolio/model"
 	"ignaciofp.es/web-service-portfolio/model/request"
 	"ignaciofp.es/web-service-portfolio/repository"
@@ -39,7 +41,14 @@ func (s UserServiceImpl) GetUserWithPass(ctx context.Context, token string) (mod
 }
 
 func (s UserServiceImpl) GetUserByFilter(ctx context.Context, filter bson.D) (model.User, error) {
-	return s.repository.GetUser(ctx, filter)
+	user, err := s.repository.GetUser(ctx, filter)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return model.User{}, util.ErrInvalidUsernameOrPassword
+		}
+		return model.User{}, err
+	}
+	return user, nil
 }
 
 // UpdateUser updates a user in the database and returns it

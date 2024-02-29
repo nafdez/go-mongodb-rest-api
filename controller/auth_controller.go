@@ -53,6 +53,10 @@ func (s AuthControllerImpl) Authenticate(ctx *gin.Context) {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		if errors.Is(err, util.ErrInvalidUsernameOrPassword) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
