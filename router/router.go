@@ -24,8 +24,14 @@ func Init(init *config.Initialization) *gin.Engine {
 	router.GET("/ping", init.UserCtrl.Ping)
 
 	// Defining groups and int's mappings
+	// Routes are duplicated because a weird error where if the
+	// route for example is /users/ and client sends a request to
+	// /users throws a CORS error.
 	var userGroup *gin.RouterGroup = router.Group("/users")
 	{
+		userGroup.GET("", init.UserCtrl.GetUser)
+		userGroup.PUT("", init.UserCtrl.UpdateUser)
+		userGroup.DELETE("", init.UserCtrl.DeleteUser)
 		userGroup.GET("/", init.UserCtrl.GetUser)
 		userGroup.PUT("/", init.UserCtrl.UpdateUser)
 		userGroup.DELETE("/", init.UserCtrl.DeleteUser)
@@ -36,6 +42,9 @@ func Init(init *config.Initialization) *gin.Engine {
 		authGroup.POST("/login", init.AuthCtrl.Authenticate)
 		authGroup.POST("/register", init.AuthCtrl.Register)
 		authGroup.POST("/logout", init.AuthCtrl.Logout)
+		authGroup.POST("/login/", init.AuthCtrl.Authenticate)
+		authGroup.POST("/register/", init.AuthCtrl.Register)
+		authGroup.POST("/logout/", init.AuthCtrl.Logout)
 	}
 
 	return router
