@@ -17,6 +17,7 @@ func Init(init *config.Initialization) *gin.Engine {
 	// - Preflight requests cached for 12 hours
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
+	config.AllowHeaders = append(config.AllowHeaders, "Token")
 	config.AllowMethods = append(config.AllowMethods, "OPTIONS")
 
 	router.Use(cors.New(config))
