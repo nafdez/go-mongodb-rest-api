@@ -13,7 +13,8 @@ import (
 func init() {
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatalf("Error loading .env file: %s", err)
+		// log.Fatalf("Error loading .env file: %s", err)
+		log.Println("No .env file found")
 	}
 
 	mode := os.Getenv("MODE")
