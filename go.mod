@@ -1,6 +1,6 @@
 module ignaciofp.es/web-service-portfolio
 
-go 1.22.0
+go 1.21.4
 
 require (
 	github.com/gin-contrib/cors v1.5.0
